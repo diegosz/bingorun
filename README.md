@@ -94,7 +94,6 @@ anything about not having a `run` command outside `bingo`. :-)
 - [ ] Add documentation.
 - [ ] Add examples.
 - [ ] Add continuous integration.
-- [ ] Handle edge cases, such as the absence of a `.bingo` folder.
 
 ## Credits
 

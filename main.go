@@ -21,7 +21,7 @@ var Version string
 const (
 	AppName                = "bingorun"
 	BuildInfoRevision      = "vcs.revision"
-	DefaultBingoFolder     = ".bingo"
+	BingoFolder            = ".bingo"
 	BingoEnvFile           = "variables.env"
 	BingoMkFile            = "Variables.mk"
 	InstallCmdRemovePrefix = "\t@"
@@ -95,29 +95,15 @@ func run() error {
 		}
 	}
 	toolName = kebabToUpperSnake(toolName)
-	var err error
-	var path string
-	file := os.Getenv("GOFILE") // defined when called from go generate
-	switch file {
-	case "":
-		path, err = os.Getwd()
-		if err != nil {
-			return err
-		}
-	default:
-		if _, err := os.Stat(file); err != nil {
-			if os.IsNotExist(err) {
-				return fmt.Errorf("file %s not found", file)
-			}
-			return err
-		}
-		path, err = filepath.Abs(file)
-		if err != nil {
-			return err
-		}
-		path = filepath.Dir(path)
+	path, err := findProjectFolder()
+	if err != nil {
+		return err
 	}
-	envFile, err := findBingoEnvFile(path)
+	bingoFolder, err := findBingoFolder(path)
+	if err != nil {
+		return err
+	}
+	envFile, err := findBingoEnvFile(bingoFolder)
 	if err != nil {
 		return err
 	}
@@ -168,61 +154,74 @@ func gobinFolder() string {
 	return gobin
 }
 
-func bingoFolder() string {
-	f := os.Getenv("BINGO_DIR")
-	f = strings.TrimSuffix(f, "/")
-	f = strings.TrimSuffix(f, "\\")
-	if f != "" {
-		return f
+func findProjectFolder() (string, error) {
+	out, err := sh.Output(mg.GoCmd(), "env", "GOWORK")
+	if err != nil {
+		return "", err
 	}
-	return DefaultBingoFolder
+	out = strings.TrimSpace(out)
+	if out != "" {
+		return filepath.Dir(out), nil
+	}
+	out, err = sh.Output(mg.GoCmd(), "env", "GOMOD")
+	if err != nil {
+		return "", err
+	}
+	out = strings.TrimSpace(out)
+	if out == "" {
+		return "", errors.New("project folder not found")
+	}
+	return filepath.Dir(out), nil
+}
+
+func findBingoFolder(path string) (string, error) {
+	if path == "" {
+		return "", errors.New("undefined path")
+	}
+	f := filepath.Join(path, BingoFolder)
+	if fi, err := os.Stat(f); err != nil {
+		if os.IsNotExist(err) {
+			return "", errors.New("bingo folder not found")
+		}
+		return "", fmt.Errorf("find bingo folder failed: %w", err)
+	} else if !fi.IsDir() {
+		return "", errors.New("invalid bingo folder, it's not a folder")
+	}
+	return f, nil
 }
 
 func findBingoEnvFile(path string) (string, error) {
 	if path == "" {
 		return "", errors.New("undefined path")
 	}
-	for {
-		bf := filepath.Join(path, bingoFolder())
-		if f, err := os.Stat(bf); err != nil {
-			if os.IsNotExist(err) {
-				path += "/.."
-				continue
-			}
-			return "", fmt.Errorf("find bingo folder failed: %w", err)
-		} else if !f.IsDir() {
-			return "", errors.New("invalid bingo folder, it's not a folder")
+	f := filepath.Join(path, BingoEnvFile)
+	if fi, err := os.Stat(f); err != nil {
+		if os.IsNotExist(err) {
+			return "", errors.New("bingo environment file not found")
 		}
-		ef := filepath.Join(bf, BingoEnvFile)
-		if f, err := os.Stat(ef); err != nil {
-			if os.IsNotExist(err) {
-				return "", errors.New("bingo environment file not found")
-			}
-			if f.IsDir() {
-				return "", errors.New("invalid bingo environment file, it's a folder")
-			}
-			return "", fmt.Errorf("find bingo environment file failed: %w", err)
+		if fi.IsDir() {
+			return "", errors.New("invalid bingo environment file, it's a folder")
 		}
-		return ef, nil
+		return "", fmt.Errorf("find bingo environment file failed: %w", err)
 	}
+	return f, nil
 }
 
-func findBingoMkFile(folder string) (string, error) {
-	if _, err := os.Stat(folder); err != nil {
-		return "", err
+func findBingoMkFile(path string) (string, error) {
+	if path == "" {
+		return "", errors.New("undefined path")
 	}
-	mf := filepath.Join(folder, BingoMkFile)
-	f, err := os.Stat(mf)
-	if err == nil {
-		if f.IsDir() {
+	f := filepath.Join(path, BingoMkFile)
+	if fi, err := os.Stat(f); err != nil {
+		if os.IsNotExist(err) {
+			return "", errors.New("bingo make file not found")
+		}
+		if fi.IsDir() {
 			return "", errors.New("invalid bingo make file, it's a folder")
 		}
-		return mf, nil
+		return "", fmt.Errorf("find bingo make file failed: %w", err)
 	}
-	if os.IsNotExist(err) {
-		return "", errors.New("bingo make file not found")
-	}
-	return "", err
+	return f, nil
 }
 
 func getEnvValueFromFile(envFile, key, gobin string) (string, error) {
@@ -282,9 +281,9 @@ func installToolIfMissing(envFile, tool, gobin string) error {
 	if !os.IsNotExist(err) {
 		return err
 	}
-	bingo := filepath.Dir(envFile)
+	path := filepath.Dir(envFile)
 	toolName := filepath.Base(tool)
-	mkFile, err := findBingoMkFile(bingo)
+	mkFile, err := findBingoMkFile(path)
 	if err != nil {
 		return err
 	}
@@ -292,7 +291,7 @@ func installToolIfMissing(envFile, tool, gobin string) error {
 	if err != nil {
 		return err
 	}
-	cmd = strings.Replace(cmd, "$(BINGO_DIR)", bingo, 1)
+	cmd = strings.Replace(cmd, "$(BINGO_DIR)", path, 1)
 	cmd = strings.Replace(cmd, "$(GOBIN)", gobin, 1)
 	cmd = strings.Replace(cmd, "$(GO)", mg.GoCmd(), 1)
 	return sh.RunV("sh", "-c", cmd)
