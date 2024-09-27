@@ -75,16 +75,6 @@ ifeq (tagdebug,$(firstword $(MAKECMDGOALS)))
 	vTAG := ${shell [[ $(TAGDEBUG_ARGS) = v* ]] && echo $(TAGDEBUG_ARGS) || $(SVU) $(TAGDEBUG_ARGS)}
 endif
 
-# If the first argument is "gittag"...
-ifeq (gittag,$(firstword $(MAKECMDGOALS)))
-	# use the rest as arguments
-  	GITTAG_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
-  	# ...and turn them into do-nothing targets
-  	$(eval $(GITTAG_ARGS):;@:)
-	GITTAG_ARGS := $(if $(GITTAG_ARGS),$(GITTAG_ARGS),vINVALID)
-	vTAG := ${shell [[ $(GITTAG_ARGS) = v* ]] && echo $(GITTAG_ARGS) || $(SVU) $(GITTAG_ARGS)}
-endif
-
 vFULL  := $(vTAG)
 vFULL := $(if $(vFULL),$(vFULL),INVALID)
 # Is this a valid version?
