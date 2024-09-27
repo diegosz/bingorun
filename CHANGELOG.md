@@ -5,6 +5,7 @@
 
 ### Chore Tasks
 
+- update .gitignore to include CHANGELOG-REVIEW.md
 - remove unused gittag handling from Makefile
 - add git-chglog tool
 - add changelog configuration and templates
