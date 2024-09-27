@@ -1,6 +1,6 @@
 # https://golangci-lint.run/usage/configuration/
 linters-settings:
-  gomnd:
+  mnd:
     ignored-numbers:
       - "0o666"
       - "0o644"
@@ -41,8 +41,6 @@ linters-settings:
       - opinionated
       - performance
       - style
-  govet:
-    check-shadowing: true
   nolintlint:
     require-explanation: false
     require-specific: true
@@ -84,44 +82,8 @@ issues:
     - linters: [govet]
       text: 'declaration of "(err|ctx)" shadows declaration at'
 
-linters:
-  enable-all: true
-  disable:
-    - cyclop
-    - gochecknoglobals
-    - exhaustruct
-    - forbidigo
-    - funlen
-    - gci
-    - gochecknoinits
-    - gocognit
-    - godot
-    - godox
-    - goerr113
-    - ireturn
-    - lll
-    - paralleltest
-    - nlreturn
-    - nonamedreturns
-    - varnamelen
-    - wrapcheck
-    - wsl
-    # linters deprecated
-    - deadcode
-    - exhaustivestruct
-    - golint
-    - ifshort
-    - interfacer
-    - maligned
-    - nosnakecase
-    - scopelint
-    - structcheck
-    - varcheck
-
-run:
-  issues-exit-code: 1
-  skip-dirs-use-default: true
-  skip-dirs:
+  # "/" will be replaced by current OS file path separator to properly work on Windows.
+  exclude-dirs:
     - .bingo
     - .chglog
     - .github
@@ -135,3 +97,36 @@ run:
     - docker
     - hot
     - logs
+  # Enables exclude of directories:
+  # - vendor$, third_party$, testdata$, examples$, Godeps$, builtin$
+  exclude-dirs-use-default: true
+
+linters:
+  enable-all: true
+  disable:
+    - cyclop
+    - gochecknoglobals
+    - exhaustruct
+    - forbidigo
+    - funlen
+    - gci
+    - gochecknoinits
+    - gocognit
+    - godot
+    - godox
+    - err113
+    - ireturn
+    - lll
+    - paralleltest
+    - nlreturn
+    - nonamedreturns
+    - varnamelen
+    - wrapcheck
+    - wsl
+    # linters deprecated
+    - execinquery
+    - exportloopref
+    - gomnd
+
+run:
+  issues-exit-code: 1
