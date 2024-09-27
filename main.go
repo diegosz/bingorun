@@ -59,7 +59,7 @@ func main() {
 	}
 }
 
-//nolint:gomnd
+//nolint:mnd
 func run() error {
 	if len(os.Args) < 2 {
 		showUsage()
@@ -235,7 +235,7 @@ func getEnvValueFromFile(envFile, key, gobin string) (string, error) {
 		l := scanner.Text()
 		if strings.HasPrefix(l, key+"=") {
 			p := strings.Split(l, "=")
-			if len(p) != 2 { //nolint:gomnd // 2 elements for key and value
+			if len(p) != 2 { //nolint:mnd // 2 elements for key and value
 				return "", fmt.Errorf("invalid bingo environment variable definition: %s", l)
 			}
 			v := strings.ReplaceAll(p[1], "\"", "")
@@ -304,7 +304,7 @@ func kebabToUpperSnake(s string) string {
 			sb.WriteString("_")
 		} else {
 			if c >= 'a' && c <= 'z' {
-				sb.WriteRune(c - 32) //nolint:gomnd // 'a' - 'A' = 32
+				sb.WriteRune(c - 32) //nolint:mnd // 'a' - 'A' = 32
 			} else {
 				sb.WriteRune(c)
 			}
