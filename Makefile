@@ -199,4 +199,4 @@ gomodupdateall:
 .PHONY: build
 
 build:
-	go build -ldflags "-s -w" -o build/bingorun main.go
+	go build -ldflags "-s -w" -o build/bingorun .
