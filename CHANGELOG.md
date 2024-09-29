@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.4.0 (2024-09-29)
+
+### Chore Tasks
+
+- update version to v0.4.0
+- update tooling
+
+
 ## v0.3.0 (2024-09-27)
 
 ### Chore Tasks
